@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio — Développeur Web Créatif</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #080808; --bg2: #111; --bg3: #181818;
+    --accent: #ff4d1c; --accent2: #ff8a65;
+    --text: #f0ede8; --muted: #777; --border: rgba(255,255,255,0.07);
+    --radius: 14px;
+  }
+  html { scroll-behavior: smooth; }
+  body { background: var(--bg); color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; line-height: 1.7; overflow-x: hidden; cursor: none; }
+  ::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-track { background: var(--bg); } ::-webkit-scrollbar-thumb { background: var(--accent); }
+
+  .cursor { position: fixed; width: 8px; height: 8px; background: var(--accent); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); }
+  .cursor-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid rgba(255,77,28,.4); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: width .3s, height .3s, border-color .3s; }
+  body.hovering .cursor-ring { width: 60px; height: 60px; border-color: rgba(255,77,28,.8); }
+
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 200; display: flex; justify-content: space-between; align-items: center; padding: 1.4rem 4rem; background: rgba(8,8,8,.9); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border); transition: padding .3s; }
+  .nav-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.15rem; color: var(--text); text-decoration: none; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: .82rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+  .nav-cta { padding: .45rem 1.2rem; background: var(--accent) !important; color: white !important; border-radius: 100px; }
+
+  .hero { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; padding: 8rem 4rem 4rem; position: relative; overflow: hidden; }
+  .hero-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,77,28,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,77,28,.04) 1px, transparent 1px); background-size: 60px 60px; pointer-events: none; }
+  .hero-glow { position: absolute; width: 700px; height: 700px; background: radial-gradient(circle, rgba(255,77,28,.1) 0%, transparent 65%); top: -150px; right: -150px; pointer-events: none; animation: glowP 7s ease-in-out infinite; }
+  @keyframes glowP { 0%,100%{opacity:.6;transform:scale(1)} 50%{opacity:1;transform:scale(1.1)} }
+
+  .hero-badge { display: inline-flex; align-items: center; gap: .6rem; background: rgba(255,77,28,.08); border: 1px solid rgba(255,77,28,.25); border-radius: 100px; padding: .3rem .9rem; font-size: .75rem; color: var(--accent2); margin-bottom: 2rem; width: fit-content; animation: fadeUp .7s ease both; }
+  .dot-live { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: blink 2s infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+
+  .hero-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(3.2rem, 7.5vw, 6.5rem); line-height: .92; letter-spacing: -.04em; margin-bottom: 1.5rem; animation: fadeUp .7s .1s ease both; }
+  .hero-title em { font-style: italic; font-weight: 400; color: var(--accent); font-family: 'Plus Jakarta Sans', sans-serif; }
+  .hero-sub { font-size: 1.05rem; color: var(--muted); max-width: 480px; font-weight: 300; margin-bottom: 2.5rem; animation: fadeUp .7s .2s ease both; }
+  .hero-actions { display: flex; gap: 1rem; align-items: center; animation: fadeUp .7s .3s ease both; }
+  .btn-primary { padding: .85rem 1.8rem; background: var(--accent); color: white; border: none; border-radius: 100px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500; font-size: .9rem; text-decoration: none; transition: all .25s; display: inline-flex; align-items: center; gap: .5rem; }
+  .btn-primary:hover { background: #e83d0a; transform: translateY(-2px); }
+  .btn-outline { padding: .85rem 1.8rem; background: transparent; color: var(--text); border: 1px solid var(--border); border-radius: 100px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500; font-size: .9rem; text-decoration: none; transition: all .25s; }
+  .btn-outline:hover { border-color: rgba(255,255,255,.25); background: rgba(255,255,255,.04); }
+
+  .hero-profile { position: absolute; right: 4rem; top: 50%; transform: translateY(-50%); animation: fadeUp .7s .4s ease both; }
+  .profile-ring { width: 300px; height: 300px; border-radius: 50%; border: 2px solid rgba(255,77,28,.25); display: flex; align-items: center; justify-content: center; position: relative; }
+  .profile-ring::before { content: ''; position: absolute; inset: -10px; border-radius: 50%; border: 1px solid rgba(255,77,28,.1); animation: ringPulse 4s ease-in-out infinite; }
+  @keyframes ringPulse { 0%,100%{transform:scale(1);opacity:.5} 50%{transform:scale(1.05);opacity:1} }
+  .profile-img { width: 260px; height: 260px; border-radius: 50%; object-fit: cover; border: 3px solid rgba(255,77,28,.3); overflow: hidden; background: var(--bg3); }
+  .profile-img img { width: 100%; height: 100%; object-fit: cover; object-position: top center; }
+  .profile-badge { position: absolute; bottom: 12px; right: 12px; background: var(--bg2); border: 1px solid rgba(255,77,28,.3); border-radius: 100px; padding: .4rem .9rem; font-size: .72rem; font-weight: 600; color: var(--accent2); display: flex; align-items: center; gap: .4rem; }
+
+  .hero-stats { display: flex; gap: 3rem; margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); animation: fadeUp .7s .5s ease both; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; line-height: 1; }
+  .stat-num span { color: var(--accent); }
+  .stat-label { font-size: .75rem; color: var(--muted); margin-top: .2rem; text-transform: uppercase; letter-spacing: .08em; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:translateY(0)} }
+
+  section { padding: 6rem 4rem; }
+  .section-tag { font-size: .72rem; text-transform: uppercase; letter-spacing: .14em; color: var(--accent); font-weight: 600; margin-bottom: .8rem; display: flex; align-items: center; gap: .7rem; }
+  .section-tag::before { content: ''; width: 22px; height: 1px; background: var(--accent); }
+  .section-title { font-family: 'Syne', sans-serif; font-size: clamp(1.8rem, 3.5vw, 2.8rem); font-weight: 800; line-height: 1.1; letter-spacing: -.03em; }
+
+  /* ABOUT */
+  .about { background: var(--bg2); }
+  .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: start; margin-top: 3rem; }
+  .about-text { font-size: 1rem; color: rgba(240,237,232,.72); font-weight: 300; line-height: 1.9; }
+  .about-text p + p { margin-top: 1rem; }
+  .hl { color: var(--text); font-weight: 500; }
+  .skills-wrap { display: flex; flex-direction: column; gap: 1.1rem; }
+  .skill-row { display: flex; flex-direction: column; gap: .35rem; }
+  .skill-hd { display: flex; justify-content: space-between; font-size: .82rem; font-weight: 500; }
+  .skill-pct { color: var(--muted); }
+  .skill-bar { height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; }
+  .skill-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transform: scaleX(0); transform-origin: left; transition: transform 1.2s cubic-bezier(.25,.46,.45,.94); }
+  .skill-fill.on { transform: scaleX(1); }
+
+  .stack-section { margin-top: 2rem; }
+  .stack-label { font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; margin-bottom: .75rem; }
+  .stack-grid { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .stack-badge { padding: .3rem .75rem; background: rgba(255,77,28,.06); border: 1px solid rgba(255,77,28,.15); border-radius: 100px; font-size: .72rem; color: var(--accent2); font-weight: 500; }
+  .stack-badge.blue { background: rgba(59,130,246,.06); border-color: rgba(59,130,246,.2); color: #60a5fa; }
+  .stack-badge.green { background: rgba(34,197,94,.06); border-color: rgba(34,197,94,.2); color: #4ade80; }
+  .stack-badge.purple { background: rgba(168,85,247,.06); border-color: rgba(168,85,247,.2); color: #c084fc; }
+
+  /* PROJECTS */
+  .projects-hd { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; }
+  .projects-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; }
+  .proj { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; opacity: 0; transform: translateY(20px); transition: opacity .5s, transform .5s, border-color .25s, box-shadow .25s; text-decoration: none; color: inherit; display: block; }
+  .proj.on { opacity: 1; transform: translateY(0); }
+  .proj:hover { border-color: rgba(255,77,28,.35); box-shadow: 0 8px 40px rgba(255,77,28,.08); transform: translateY(-4px) !important; }
+  .proj.span2 { grid-column: span 2; }
+  .proj-thumb { height: 180px; position: relative; overflow: hidden; }
+  .proj.span2 .proj-thumb { height: 200px; }
+  .proj-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s; }
+  .proj:hover .proj-thumb img { transform: scale(1.03); }
+  .proj-thumb-bg { position: absolute; inset: 0; }
+  .proj-body { padding: 1.25rem; }
+  .proj-tags { display: flex; gap: .4rem; flex-wrap: wrap; margin-bottom: .65rem; }
+  .tag { font-size: .67rem; padding: .18rem .55rem; background: rgba(255,77,28,.08); border: 1px solid rgba(255,77,28,.18); border-radius: 100px; color: var(--accent2); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+  .tag.blue { background: rgba(59,130,246,.08); border-color: rgba(59,130,246,.18); color: #60a5fa; }
+  .tag.green { background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.2); color: #4ade80; }
+  .tag.purple { background: rgba(168,85,247,.08); border-color: rgba(168,85,247,.2); color: #c084fc; }
+  .proj-name { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -.02em; margin-bottom: .4rem; }
+  .proj-desc { font-size: .82rem; color: var(--muted); line-height: 1.6; margin-bottom: .9rem; }
+  .proj-link { display: inline-flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--accent2); font-weight: 500; transition: gap .2s; }
+  .proj:hover .proj-link { gap: .7rem; }
+
+  /* ═══ PROCESS — STYLE AMÉLIORÉ ═══ */
+  .process { background: var(--bg2); overflow: hidden; position: relative; }
+  .process::before {
+    content: 'MÉTHODE';
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    font-family: 'Syne', sans-serif; font-size: 14rem; font-weight: 800;
+    letter-spacing: -.05em; color: rgba(255,77,28,.025);
+    pointer-events: none; white-space: nowrap;
+  }
+  .process-steps {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 0; margin-top: 3rem;
+    border: 1px solid var(--border); position: relative;
+  }
+  .process-step {
+    padding: 2.5rem 2rem;
+    border-right: 1px solid var(--border);
+    position: relative; overflow: hidden;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.6s, transform 0.6s, background .3s;
+  }
+  .process-step:last-child { border-right: none; }
+  .process-step.on { opacity: 1; transform: translateY(0); }
+  .process-step:hover { background: rgba(255,77,28,.03); }
+  .process-step::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px; background: var(--accent);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform .4s cubic-bezier(.25,.46,.45,.94);
+  }
+  .process-step:hover::after { transform: scaleX(1); }
+  .step-num-wrap {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 1.5rem;
+  }
+  .step-num {
+    font-family: 'Syne', sans-serif; font-size: 4.5rem; font-weight: 800; line-height: .8;
+    background: linear-gradient(135deg, rgba(255,77,28,.35), rgba(255,77,28,.06));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .step-arrow {
+    width: 32px; height: 32px; border: 1px solid rgba(255,77,28,.25);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: .8rem; margin-top: .4rem;
+    transition: background .2s, border-color .2s;
+  }
+  .process-step:hover .step-arrow { background: rgba(255,77,28,.1); border-color: rgba(255,77,28,.5); }
+  .step-icon {
+    font-size: 1.6rem; margin-bottom: .9rem;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 48px; height: 48px;
+    background: rgba(255,77,28,.07); border: 1px solid rgba(255,77,28,.15);
+    border-radius: 12px;
+  }
+  .step-title {
+    font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700;
+    letter-spacing: -.02em; color: var(--text); margin-bottom: .6rem;
+  }
+  .step-title-accent {
+    display: block; font-size: .68rem; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--accent);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;
+    margin-bottom: .3rem;
+  }
+  .step-desc { font-size: .83rem; color: var(--muted); line-height: 1.75; font-weight: 300; }
+  .step-tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: 1.2rem; }
+  .step-tag {
+    font-size: .62rem; padding: .15rem .55rem;
+    background: rgba(255,77,28,.05); border: 1px solid rgba(255,77,28,.12);
+    border-radius: 100px; color: rgba(255,138,101,.65);
+    letter-spacing: .06em; text-transform: uppercase;
+  }
+  .process-connector {
+    position: absolute; top: 50%; right: -1px;
+    width: 24px; height: 24px; background: var(--bg2);
+    border: 1px solid rgba(255,77,28,.25); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--accent); font-size: .65rem;
+    transform: translateY(-50%) translateX(50%); z-index: 1;
+  }
+  .process-step:last-child .process-connector { display: none; }
+
+  /* PRICING */
+  .pricing { background: var(--bg); }
+  .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-top: 3rem; }
+  .price-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 2rem; position: relative; opacity: 0; transform: translateY(20px); transition: opacity .5s, transform .5s; }
+  .price-card.on { opacity: 1; transform: translateY(0); }
+  .price-card.popular { border-color: rgba(255,77,28,.4); }
+  .popular-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: var(--accent); color: white; font-size: .7rem; font-weight: 700; padding: .25rem .8rem; border-radius: 100px; white-space: nowrap; }
+  .price-tier { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); font-weight: 600; margin-bottom: .75rem; }
+  .price-amount { font-family: 'Syne', sans-serif; font-size: 2.8rem; font-weight: 800; line-height: 1; margin-bottom: .25rem; }
+  .price-amount span { font-size: 1rem; font-weight: 400; color: var(--muted); }
+  .price-desc { font-size: .85rem; color: var(--muted); margin-bottom: 1.5rem; }
+  .price-features { list-style: none; display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.75rem; }
+  .price-features li { font-size: .85rem; display: flex; align-items: flex-start; gap: .6rem; }
+  .price-features li::before { content: '✓'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  .price-features li.off { color: var(--muted); }
+  .price-features li.off::before { content: '–'; color: var(--muted); }
+  .btn-pay { display: block; width: 100%; padding: .8rem; background: rgba(255,77,28,.12); border: 1px solid rgba(255,77,28,.3); border-radius: 100px; color: var(--accent2); font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: .85rem; text-align: center; cursor: pointer; transition: all .25s; }
+  .btn-pay:hover, .price-card.popular .btn-pay { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* ═══ CARTE TÉMOIGNAGE ═══ */
+  .price-card.temoignage {
+    border: 1px solid rgba(255,215,0,.2);
+    background: linear-gradient(145deg, var(--bg2), rgba(255,215,0,.02));
+    cursor: pointer;
+    transition: opacity .5s, transform .5s, border-color .3s, box-shadow .3s;
+  }
+  .price-card.temoignage:hover { border-color: rgba(255,215,0,.5); box-shadow: 0 0 40px rgba(255,215,0,.06); }
+  .temo-badge {
+    position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #b8860b, #ffd700, #b8860b);
+    color: #080808; font-size: .7rem; font-weight: 700;
+    padding: .25rem .9rem; border-radius: 100px; white-space: nowrap; letter-spacing: .05em;
+  }
+  .temo-icon { font-size: 2rem; margin-bottom: .75rem; }
+  .temo-price {
+    font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+    background: linear-gradient(135deg, #b8860b, #ffd700);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    margin: .5rem 0 .25rem;
+  }
+  .temo-price-sub { font-size: .75rem; color: rgba(255,215,0,.5); margin-bottom: 1.2rem; }
+  .price-features li.temo { color: rgba(255,215,0,.75); }
+  .price-features li.temo::before { color: #ffd700; }
+  .btn-temo {
+    display: block; width: 100%; padding: .85rem;
+    background: linear-gradient(135deg, rgba(184,134,11,.15), rgba(255,215,0,.1));
+    border: 1px solid rgba(255,215,0,.3); border-radius: 100px;
+    color: #ffd700; font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600; font-size: .85rem; text-align: center;
+    cursor: pointer; transition: all .25s;
+  }
+  .btn-temo:hover { background: linear-gradient(135deg, #b8860b, #ffd700); color: #080808; border-color: #ffd700; }
+  .temo-pulse { position: absolute; top: 1rem; right: 1rem; width: 8px; height: 8px; background: #ffd700; border-radius: 50%; animation: blink 2s infinite; }
+
+  .stripe-note { text-align: center; margin-top: 1.5rem; font-size: .78rem; color: var(--muted); display: flex; align-items: center; justify-content: center; gap: .5rem; }
+  .stripe-badge { display: inline-flex; align-items: center; gap: .35rem; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); border-radius: 6px; padding: .2rem .6rem; font-size: .72rem; color: rgba(255,255,255,.5); }
+
+  /* MODAL STRIPE */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); backdrop-filter: blur(8px); z-index: 1000; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid rgba(255,77,28,.25); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 440px; position: relative; }
+  .modal-close { position: absolute; top: 1rem; right: 1.25rem; background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.4rem; }
+  .modal h3 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.3rem; margin-bottom: .4rem; }
+  .modal p { font-size: .875rem; color: var(--muted); margin-bottom: 1.75rem; }
+  .form-field { margin-bottom: 1.1rem; }
+  .form-field label { display: block; font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: .45rem; }
+  .form-field input { width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: .75rem 1rem; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .9rem; outline: none; transition: border-color .2s; }
+  .form-field input:focus { border-color: rgba(255,77,28,.5); }
+  #card-element { background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 8px; padding: .85rem 1rem; }
+  #card-errors { color: #ff6b6b; font-size: .8rem; margin-top: .5rem; min-height: 1.2em; }
+  .btn-submit-pay { width: 100%; padding: .9rem; background: var(--accent); border: none; border-radius: 100px; color: white; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600; font-size: .9rem; cursor: pointer; transition: all .25s; margin-top: 1.5rem; display: flex; align-items: center; justify-content: center; gap: .5rem; }
+  .btn-submit-pay:hover { background: #e83d0a; transform: translateY(-1px); }
+  .btn-submit-pay:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .pay-success { display: none; text-align: center; padding: 1.5rem 0; }
+  .pay-success .checkmark { font-size: 3rem; margin-bottom: 1rem; }
+  .pay-success h4 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: .5rem; }
+
+  /* ═══ MODAL QUESTIONNAIRE TÉMOIGNAGE ═══ */
+  .temo-modal { background: var(--bg2); border: 1px solid rgba(255,215,0,.2); border-radius: 20px; padding: 0; width: 100%; max-width: 580px; position: relative; overflow: hidden; }
+  .temo-modal-header { background: linear-gradient(135deg, rgba(184,134,11,.12), rgba(255,215,0,.05)); border-bottom: 1px solid rgba(255,215,0,.15); padding: 1.8rem 2rem; }
+  .temo-modal-title { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800; background: linear-gradient(135deg, #b8860b, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: .3rem; }
+  .temo-modal-sub { font-size: .82rem; color: rgba(255,215,0,.5); }
+  .temo-modal-body { padding: 2rem; max-height: 70vh; overflow-y: auto; }
+  .temo-modal-body::-webkit-scrollbar { width: 2px; }
+  .temo-modal-body::-webkit-scrollbar-thumb { background: rgba(255,215,0,.3); }
+  .q-progress { margin-bottom: 1.8rem; }
+  .q-progress-bar { height: 2px; background: rgba(255,215,0,.1); border-radius: 2px; margin-bottom: .5rem; }
+  .q-progress-fill { height: 100%; background: linear-gradient(90deg, #b8860b, #ffd700); border-radius: 2px; transition: width .4s ease; }
+  .q-progress-text { font-size: .7rem; color: rgba(255,215,0,.4); letter-spacing: .12em; text-transform: uppercase; }
+  .q-step { display: none; }
+  .q-step.active { display: block; animation: qFade .35s ease; }
+  @keyframes qFade { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+  .q-step-label { font-size: .68rem; letter-spacing: .2em; text-transform: uppercase; color: rgba(255,215,0,.5); margin-bottom: .4rem; font-weight: 600; }
+  .q-step-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin-bottom: 1.2rem; letter-spacing: -.02em; }
+  .q-options { display: flex; flex-direction: column; gap: .6rem; }
+  .q-option { display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 10px; padding: .9rem 1.1rem; cursor: pointer; transition: all .2s; position: relative; }
+  .q-option:hover { border-color: rgba(255,215,0,.3); background: rgba(255,215,0,.03); }
+  .q-option.selected { border-color: rgba(255,215,0,.5); background: rgba(255,215,0,.06); }
+  .q-option-icon { font-size: 1.3rem; flex-shrink: 0; }
+  .q-option-text { font-size: .88rem; color: var(--text); font-weight: 400; }
+  .q-option-sub { font-size: .72rem; color: var(--muted); margin-top: .1rem; }
+  .q-option-check { position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .65rem; color: #080808; transition: background .2s, border-color .2s; }
+  .q-option.selected .q-option-check { background: #ffd700; border-color: #ffd700; }
+  .q-option.selected .q-option-check::after { content: '✓'; }
+  .q-input { width: 100%; background: rgba(255,255,255,.04); border: 1px solid rgba(255,215,0,.15); border-radius: 10px; padding: .85rem 1rem; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .9rem; outline: none; transition: border-color .2s; resize: vertical; }
+  .q-input:focus { border-color: rgba(255,215,0,.4); }
+  .q-input::placeholder { color: var(--muted); }
+  .q-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+  .q-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 1.8rem; padding-top: 1.2rem; border-top: 1px solid var(--border); }
+  .q-btn-back { background: none; border: 1px solid var(--border); border-radius: 100px; color: var(--muted); padding: .65rem 1.4rem; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .82rem; cursor: pointer; transition: all .2s; }
+  .q-btn-back:hover { border-color: rgba(255,255,255,.2); color: var(--text); }
+  .q-btn-next { background: linear-gradient(135deg, #b8860b, #ffd700); border: none; border-radius: 100px; color: #080808; padding: .65rem 1.8rem; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .82rem; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: .5rem; }
+  .q-btn-next:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(255,215,0,.2); }
+  .q-summary { background: rgba(255,215,0,.04); border: 1px solid rgba(255,215,0,.15); border-radius: 12px; padding: 1.4rem; margin-top: 1rem; }
+  .q-summary-title { font-size: .72rem; letter-spacing: .18em; text-transform: uppercase; color: rgba(255,215,0,.5); margin-bottom: .9rem; }
+  .q-summary-row { display: flex; justify-content: space-between; font-size: .85rem; padding: .4rem 0; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .q-summary-row:last-child { border-bottom: none; }
+  .q-summary-key { color: var(--muted); }
+  .q-summary-val { color: var(--text); font-weight: 400; }
+  .q-success { text-align: center; padding: 2rem 0; display: none; }
+  .q-success-icon { font-size: 3rem; margin-bottom: 1rem; }
+  .q-success h4 { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 700; margin-bottom: .5rem; background: linear-gradient(135deg,#b8860b,#ffd700); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  .q-success p { font-size: .85rem; color: var(--muted); }
+
+  /* AI CHAT */
+  .chat-section { background: var(--bg2); }
+  .chat-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; margin-top: 3rem; }
+  .chat-box { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .chat-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: .75rem; }
+  .chat-avatar { width: 32px; height: 32px; background: rgba(255,77,28,.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .8rem; }
+  .chat-header-name { font-size: .85rem; font-weight: 600; }
+  .chat-status { font-size: .72rem; color: var(--muted); display: flex; align-items: center; gap: .3rem; }
+  .chat-status::before { content: ''; width: 6px; height: 6px; background: #4ade80; border-radius: 50%; }
+  .chat-msgs { height: 320px; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: .85rem; }
+  .chat-msgs::-webkit-scrollbar { width: 2px; }
+  .msg { max-width: 80%; }
+  .msg-bot { align-self: flex-start; }
+  .msg-user { align-self: flex-end; }
+  .msg-bubble { padding: .65rem .95rem; border-radius: 14px; font-size: .83rem; line-height: 1.5; }
+  .msg-bot .msg-bubble { background: rgba(255,255,255,.06); border-bottom-left-radius: 4px; }
+  .msg-user .msg-bubble { background: var(--accent); color: white; border-bottom-right-radius: 4px; }
+  .msg-time { font-size: .65rem; color: var(--muted); margin-top: .25rem; padding: 0 .3rem; }
+  .msg-user .msg-time { text-align: right; }
+  .typing { display: flex; gap: .3rem; align-items: center; padding: .6rem .9rem; background: rgba(255,255,255,.06); border-radius: 14px; border-bottom-left-radius: 4px; width: fit-content; }
+  .typing span { width: 5px; height: 5px; background: var(--muted); border-radius: 50%; animation: typingDot 1.4s infinite; }
+  .typing span:nth-child(2) { animation-delay: .2s; }
+  .typing span:nth-child(3) { animation-delay: .4s; }
+  @keyframes typingDot { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+  .chat-input-wrap { padding: .85rem; border-top: 1px solid var(--border); display: flex; gap: .5rem; }
+  .chat-input { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 100px; padding: .6rem 1rem; color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: .83rem; outline: none; transition: border-color .2s; }
+  .chat-input:focus { border-color: rgba(255,77,28,.4); }
+  .chat-send { width: 36px; height: 36px; background: var(--accent); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+  .chat-send:hover { background: #e83d0a; }
+  .chat-send svg { width: 14px; height: 14px; color: white; }
+  .chat-hints { display: flex; flex-wrap: wrap; gap: .5rem; padding: 0 .85rem .85rem; }
+  .hint-chip { padding: .3rem .75rem; background: rgba(255,77,28,.06); border: 1px solid rgba(255,77,28,.15); border-radius: 100px; font-size: .72rem; color: var(--accent2); cursor: pointer; transition: background .2s; }
+  .hint-chip:hover { background: rgba(255,77,28,.12); }
+
+  /* CONTACT */
+  .contact { background: var(--bg); }
+  .contact-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center; }
+  .contact-links { display: flex; flex-direction: column; gap: .85rem; }
+  .contact-link { display: flex; align-items: center; gap: 1rem; padding: 1.1rem 1.4rem; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); text-decoration: none; color: var(--text); transition: all .2s; }
+  .contact-link:hover { border-color: rgba(255,77,28,.35); background: rgba(255,77,28,.04); transform: translateX(4px); }
+  .c-icon { width: 42px; height: 42px; background: rgba(255,77,28,.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+  .c-info { flex: 1; }
+  .c-label { font-size: .7rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; }
+  .c-val { font-weight: 500; font-size: .9rem; }
+
+  footer { padding: 1.75rem 4rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .foot-logo { font-family: 'Syne', sans-serif; font-weight: 800; color: var(--text); text-decoration: none; }
+  .foot-logo span { color: var(--accent); }
+  footer p { font-size: .78rem; color: var(--muted); }
+
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .55s, transform .55s; }
+  .reveal.on { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 1200px) { .pricing-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 1000px) {
+    nav { padding: 1.1rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 4rem 1.5rem; }
+    .hero { padding: 7rem 1.5rem 3rem; }
+    .hero-profile { display: none; }
+    .about-grid, .contact-inner, .chat-wrap { grid-template-columns: 1fr; gap: 2.5rem; }
+    .projects-grid, .pricing-grid { grid-template-columns: 1fr; }
+    .process-steps { grid-template-columns: 1fr 1fr; }
+    .proj.span2 { grid-column: span 1; }
+    .hero-stats { flex-wrap: wrap; gap: 1.5rem; }
+    footer { flex-direction: column; gap: .5rem; text-align: center; }
+    .q-grid { grid-template-columns: 1fr; }
+    .temo-modal { max-width: 95vw; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cr"></div>
+
+<nav id="nav">
+  <a href="#home" class="nav-logo">dev<span>.</span>folio</a>
+  <ul class="nav-links">
+    <li><a href="#about">À propos</a></li>
+    <li><a href="#projects">Projets</a></li>
+    <li><a href="#process">Méthode</a></li>
+    <li><a href="#pricing">Tarifs</a></li>
+    <li><a href="#chat">Assistant IA</a></li>
+    <li><a href="#contact" class="nav-cta">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-badge"><span class="dot-live"></span>Disponible pour des projets freelance</div>
+  <h1 class="hero-title">Développeur<br><em>Web &amp; UI</em><br>Créatif</h1>
+  <p class="hero-sub">Je transforme vos idées en expériences numériques modernes — du design interactif aux applications full-stack.</p>
+  <div class="hero-actions">
+    <a href="#projects" class="btn-primary">Voir mes projets <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></a>
+    <a href="#pricing" class="btn-outline">Mes tarifs</a>
+  </div>
+  <div class="hero-profile">
+    <div class="profile-ring">
+      <div class="profile-img">
+        <img src="./Moi sur fond bleu.jpg" alt="Photo de profil" onerror="this.style.display='none'; this.parentNode.innerHTML='<span style=\'font-size:5rem\'>👨‍💻</span>'">
+      </div>
+    </div>
+    <div class="profile-badge"><span class="dot-live"></span>Open to work</div>
+  </div>
+  <div class="hero-stats">
+    <div><div class="stat-num" data-target="9">0<span>+</span></div><div class="stat-label">Projets</div></div>
+    <div><div class="stat-num" data-target="6">0<span>+</span></div><div class="stat-label">Technologies</div></div>
+    <div><div class="stat-num" data-target="100" data-suffix="%">0</div><div class="stat-label">Engagement</div></div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about reveal" id="about">
+  <div class="section-tag">À propos</div>
+  <h2 class="section-title">Coder, c'est<br>construire l'invisible.</h2>
+  <div class="about-grid">
+    <div class="about-text">
+      <p>Développeur web passionné, je crée des interfaces <span class="hl">modernes, fonctionnelles et esthétiques</span>. Chaque projet est une opportunité d'apprendre, d'innover et de livrer quelque chose dont je suis fier.</p>
+      <p>J'ai développé des applications <span class="hl">full-stack</span> avec React, Node.js et Firebase, intégré des paiements Stripe, et connecté des bases de données PostgreSQL. Chaque détail de l'UI compte autant que la robustesse du backend.</p>
+      <p>En dehors du code, je m'inspire de l'art, du design editorial et de l'architecture — des disciplines qui m'ont appris que <span class="hl">chaque détail compte</span>.</p>
+      <div class="stack-section">
+        <div class="stack-label">Stack Frontend</div>
+        <div class="stack-grid">
+          <span class="stack-badge">HTML5</span><span class="stack-badge">CSS3</span><span class="stack-badge">JavaScript</span><span class="stack-badge blue">React</span><span class="stack-badge">Tailwind CSS</span>
+        </div>
+      </div>
+      <div class="stack-section" style="margin-top:1rem">
+        <div class="stack-label">Stack Backend & Outils</div>
+        <div class="stack-grid">
+          <span class="stack-badge green">Node.js</span><span class="stack-badge green">Express</span><span class="stack-badge blue">Firebase</span><span class="stack-badge purple">PostgreSQL</span><span class="stack-badge">Stripe</span><span class="stack-badge blue">Vite</span>
+        </div>
+      </div>
+    </div>
+    <div class="skills-wrap" id="skillsWrap">
+      <div class="skill-row"><div class="skill-hd"><span>HTML / CSS</span><span class="skill-pct">90%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".90"></div></div></div>
+      <div class="skill-row"><div class="skill-hd"><span>JavaScript</span><span class="skill-pct">78%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".78"></div></div></div>
+      <div class="skill-row"><div class="skill-hd"><span>React</span><span class="skill-pct">72%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".72"></div></div></div>
+      <div class="skill-row"><div class="skill-hd"><span>Node.js / Express</span><span class="skill-pct">65%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".65"></div></div></div>
+      <div class="skill-row"><div class="skill-hd"><span>Firebase</span><span class="skill-pct">70%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".70"></div></div></div>
+      <div class="skill-row"><div class="skill-hd"><span>UI / UX Design</span><span class="skill-pct">82%</span></div><div class="skill-bar"><div class="skill-fill" data-w=".82"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROJECTS — 9 projets originaux -->
+<section id="projects">
+  <div class="projects-hd">
+    <div><div class="section-tag">Projets</div><h2 class="section-title">Ce que j'ai construit.</h2></div>
+    <span style="color:var(--muted);font-size:.85rem;">09 projets</span>
+  </div>
+  <div class="projects-grid">
+
+    <a href="fyore-demo/index.html" class="proj span2" data-delay="0">
+      <div class="proj-thumb">
+        <div class="proj-thumb-bg" style="background:linear-gradient(135deg,#0a0800,#1a1200,#080600)"></div>
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(201,168,76,.08) 0%,transparent 60%)"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:3rem">
+          <div style="text-align:center;z-index:1">
+            <div style="font-size:2.8rem;filter:drop-shadow(0 4px 12px rgba(201,168,76,.4))">🧢</div>
+            <div style="font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;background:linear-gradient(135deg,#c9a84c,#f5e6b8,#c9a84c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-top:.5rem;letter-spacing:.04em">FYORE</div>
+            <div style="font-size:.65rem;color:rgba(201,168,76,.5);letter-spacing:.2em;margin-top:.2rem">CUSTOM CAPS</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.5rem;z-index:1">
+            <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:8px;padding:.55rem .9rem;font-size:.7rem;color:rgba(201,168,76,.8)"><span style="color:#c9a84c;font-weight:700">Stripe</span> Payment Intents + Webhooks</div>
+            <div style="background:rgba(96,165,250,.05);border:1px solid rgba(96,165,250,.18);border-radius:8px;padding:.55rem .9rem;font-size:.7rem;color:rgba(96,165,250,.7)"><span style="color:#60a5fa;font-weight:700">React 18</span> + Context API + React Router v6</div>
+            <div style="background:rgba(74,222,128,.05);border:1px solid rgba(74,222,128,.18);border-radius:8px;padding:.55rem .9rem;font-size:.7rem;color:rgba(74,222,128,.7)"><span style="color:#4ade80;font-weight:700">Node.js</span> / Express + PostgreSQL + JWT</div>
+          </div>
+        </div>
+      </div>
+      <div class="proj-body">
+        <div class="proj-tags"><span class="tag blue">React 18</span><span class="tag green">Node.js</span><span class="tag green">Express</span><span class="tag">Stripe</span><span class="tag purple">PostgreSQL</span><span class="tag">JWT + bcrypt</span><span class="tag green">Featured</span></div>
+        <div class="proj-name">FYORE Custom Caps — E-commerce Full-Stack</div>
+        <p class="proj-desc">Boutique luxury streetwear full-stack : catalogue avec filtres, panier persistant (localStorage), authentification JWT/bcrypt, paiements Stripe Payment Intents + webhooks, gestion de stock automatique, historique commandes et API REST Express / base PostgreSQL.</p>
+        <div style="display:flex;gap:1.25rem;margin-bottom:.9rem;font-size:.75rem;color:var(--muted)"><span>✅ Auth JWT + Profil</span><span>✅ Panier localStorage</span><span>✅ Paiement Stripe</span><span>✅ Admin produits</span></div>
+        <span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+      </div>
+    </a>
+
+    <a href="Systeme de reservation/index.html" class="proj" data-delay="1">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#05111f,#0a1e38)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.8rem"><div style="font-size:2rem">📅</div><div style="display:flex;gap:.4rem"><div style="width:34px;height:34px;background:rgba(255,77,28,.85);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:white">14</div><div style="width:34px;height:34px;background:rgba(255,255,255,.06);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:rgba(255,255,255,.35)">15</div><div style="width:34px;height:34px;background:rgba(255,255,255,.06);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;color:rgba(255,255,255,.35)">16</div></div><div style="font-size:.65rem;color:rgba(96,165,250,.7);margin-top:.3rem">Firebase Firestore</div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag blue">React</span><span class="tag blue">Firebase</span><span class="tag">Vite</span><span class="tag">TailwindCSS</span></div><div class="proj-name">Système de Réservation CRM</div><p class="proj-desc">App React + Firebase avec calendrier interactif, gestion des réservations en temps réel via Firestore, formulaire react-hook-form et notifications toast.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Boulangerie_landing-page_IA/index.html" class="proj span2" data-delay="2">
+      <div class="proj-thumb" style="height:200px">
+        <img src="Portfolio_2/images/restaurant-vitrine-braise.html.png" alt="Boulangerie Landing Page" onerror="this.style.display='none'">
+        <div class="proj-thumb-bg" style="background:linear-gradient(135deg,#140c00,#231500,#080808)"></div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:2.5rem"><div style="text-align:center;z-index:1"><div style="font-size:2.8rem">🥖</div><div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:#f5c842;margin-top:.4rem">La Boulangerie</div><div style="font-size:.7rem;color:rgba(245,200,66,.4);letter-spacing:.12em;margin-top:.2rem">ARTISANALE × IA</div></div><div style="background:rgba(245,200,66,.08);border:1px solid rgba(245,200,66,.18);border-radius:10px;padding:.9rem 1.1rem;z-index:1"><div style="font-size:.68rem;color:rgba(245,200,66,.6);margin-bottom:.5rem">✨ Contenu IA</div><div style="font-size:.75rem;color:rgba(255,255,255,.45);line-height:1.6">Catalogue JSON<br>Commandes JS</div></div></div>
+      </div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span><span class="tag green">IA</span><span class="tag">JSON</span><span class="tag">Landing Page</span></div><div class="proj-name">Boulangerie — Landing Page IA</div><p class="proj-desc">Landing page artisanale avec contenu généré par IA, catalogue produits JSON, système de commandes JS, menu dynamique et avis clients. Design chaleureux et storytelling fort.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Animation-slider-design/index.html" class="proj" data-delay="3">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#050f05,#0a1a0a)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem"><div style="display:flex;gap:.4rem"><div style="width:52px;height:32px;background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.35);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#4ade80;font-weight:600;text-align:center;padding:2px">Ingénieur IA</div><div style="width:52px;height:32px;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:rgba(74,222,128,.35);text-align:center;padding:2px">Cyber</div><div style="width:52px;height:32px;background:rgba(74,222,128,.04);border:1px solid rgba(74,222,128,.1);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:rgba(74,222,128,.35);text-align:center;padding:2px">UX/UI</div></div><div style="font-size:1.4rem">🔬</div><div style="font-size:.6rem;color:rgba(74,222,128,.5)">9 profils métiers</div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">CSS</span><span class="tag">JavaScript</span><span class="tag green">Animation</span></div><div class="proj-name">Slider Métiers d'Ingénieur</div><p class="proj-desc">Slider animé présentant 9 profils métiers (IA, cybersécurité, robotique, UX/UI…) avec transitions fluides et effets visuels CSS avancés.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Calculatrice_javasript_2/index.html" class="proj" data-delay="4">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#0f050f,#180a18)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center"><div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:.9rem;width:132px"><div style="background:rgba(0,0,0,.5);border-radius:6px;padding:.35rem .7rem;text-align:right;font-size:1.1rem;font-weight:700;color:white;margin-bottom:.45rem;font-family:'Syne',sans-serif">42.0</div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.25rem"><div style="background:rgba(255,77,28,.3);border-radius:4px;height:20px;font-size:.58rem;display:flex;align-items:center;justify-content:center;color:white">C</div><div style="background:rgba(255,255,255,.07);border-radius:4px;height:20px;font-size:.58rem;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4)">%</div><div style="background:rgba(255,255,255,.07);border-radius:4px;height:20px;font-size:.58rem;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4)">÷</div><div style="background:rgba(255,255,255,.07);border-radius:4px;height:20px;font-size:.58rem;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4)">×</div></div></div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">JavaScript</span><span class="tag">CSS</span></div><div class="proj-name">Calculatrice JavaScript</div><p class="proj-desc">Calculatrice interactive avec toutes les opérations, gestion de l'ordre et interface épurée entièrement en JS vanilla.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Generateur de verset(non-fini)/index.html" class="proj" data-delay="5">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#07071a,#0f0f28)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.65rem;padding:1.5rem"><div style="font-size:1.8rem">📖</div><div style="background:rgba(147,112,219,.08);border:1px solid rgba(147,112,219,.2);border-radius:8px;padding:.7rem;text-align:center"><div style="font-size:.68rem;color:rgba(147,112,219,.7);font-style:italic;line-height:1.5">"Car Dieu a tant aimé<br>le monde..."</div><div style="font-size:.6rem;color:rgba(147,112,219,.4);margin-top:.25rem">Jean 3:16</div></div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">JavaScript</span><span class="tag blue">API</span></div><div class="proj-name">Générateur de Versets Bibliques</div><p class="proj-desc">Application affichant des versets bibliques avec animation d'apparition et appel API dynamique.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Landing_page(exo)/Mcdo/index.html" class="proj" data-delay="6">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#1a0f00,#241400)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.5rem"><div style="font-size:2.5rem">🍔</div><div style="font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:#FFC72C;letter-spacing:-.02em">McDonald's</div><div style="font-size:.65rem;color:rgba(255,199,44,.4);letter-spacing:.08em">LANDING PAGE</div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div><div class="proj-name">Landing Page McDonald's</div><p class="proj-desc">Recréation d'une landing page McDonald's responsive avec animations CSS, sections hero et call-to-action optimisés.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Rdv_Coiffeur(((/index.html" class="proj" data-delay="7">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#1a0a1a,#280f28)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.6rem"><div style="font-size:2rem">✂️</div><div style="background:rgba(192,132,252,.08);border:1px solid rgba(192,132,252,.2);border-radius:8px;padding:.65rem .9rem;text-align:center"><div style="font-size:.7rem;color:rgba(192,132,252,.7);font-weight:600">Réserver un créneau</div><div style="font-size:.6rem;color:rgba(192,132,252,.4);margin-top:.25rem">Salon de coiffure</div></div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">HTML</span><span class="tag">CSS</span><span class="tag">JavaScript</span></div><div class="proj-name">Prise de RDV Coiffeur</div><p class="proj-desc">Interface de réservation en ligne pour salon de coiffure avec sélection de créneaux et formulaire de confirmation.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+    <a href="Formulaire_HTML-CSS/index.html" class="proj" data-delay="8">
+      <div class="proj-thumb"><div class="proj-thumb-bg" style="background:linear-gradient(135deg,#111200,#1a1900)"></div><div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:.45rem;padding:1.5rem"><div style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,200,0,.18);border-radius:6px;padding:.38rem .7rem;font-size:.62rem;color:rgba(255,200,0,.45)">Nom complet</div><div style="width:100%;background:rgba(255,255,255,.04);border:1px solid rgba(255,200,0,.18);border-radius:6px;padding:.38rem .7rem;font-size:.62rem;color:rgba(255,200,0,.45)">Email</div><div style="background:rgba(255,200,0,.75);border-radius:6px;padding:.38rem .9rem;font-size:.62rem;font-weight:700;color:#080808">Envoyer →</div></div></div>
+      <div class="proj-body"><div class="proj-tags"><span class="tag">HTML</span><span class="tag">CSS</span></div><div class="proj-name">Formulaire HTML/CSS</div><p class="proj-desc">Formulaire stylisé avec validation côté client, animations de focus et design personnalisé.</p><span class="proj-link">Voir le projet <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span></div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ═══ PROCESS — STYLE AMÉLIORÉ ═══ -->
+<section class="process" id="process">
+  <div class="section-tag">Méthode</div>
+  <h2 class="section-title reveal">Comment je travaille.</h2>
+  <p class="reveal" style="color:var(--muted);margin-top:.6rem;font-size:.95rem;max-width:480px">Un processus en 4 étapes pensé pour livrer vite, bien, et sans surprises.</p>
+
+  <div class="process-steps" style="margin-top:2.5rem">
+    <div class="process-step">
+      <div class="process-connector">→</div>
+      <div class="step-num-wrap"><div class="step-num">01</div><div class="step-arrow">→</div></div>
+      <div class="step-icon">🎧</div>
+      <div class="step-title"><span class="step-title-accent">Phase 01</span>Écoute & Analyse</div>
+      <p class="step-desc">Je prends le temps de comprendre vos besoins, vos utilisateurs et vos objectifs avant d'écrire la moindre ligne de code.</p>
+      <div class="step-tags"><span class="step-tag">Brief</span><span class="step-tag">Personas</span><span class="step-tag">Objectifs</span></div>
+    </div>
+    <div class="process-step">
+      <div class="process-connector">→</div>
+      <div class="step-num-wrap"><div class="step-num">02</div><div class="step-arrow">→</div></div>
+      <div class="step-icon">🎨</div>
+      <div class="step-title"><span class="step-title-accent">Phase 02</span>Design & Structure</div>
+      <p class="step-desc">Wireframes, maquettes, choix typographiques — je construis l'architecture visuelle et fonctionnelle du projet.</p>
+      <div class="step-tags"><span class="step-tag">Figma</span><span class="step-tag">Wireframe</span><span class="step-tag">UI Kit</span></div>
+    </div>
+    <div class="process-step">
+      <div class="process-connector">→</div>
+      <div class="step-num-wrap"><div class="step-num">03</div><div class="step-arrow">→</div></div>
+      <div class="step-icon">💻</div>
+      <div class="step-title"><span class="step-title-accent">Phase 03</span>Développement</div>
+      <p class="step-desc">Code propre, sémantique et responsive. J'intègre les animations et micro-interactions pour une expérience mémorable.</p>
+      <div class="step-tags"><span class="step-tag">React</span><span class="step-tag">Node.js</span><span class="step-tag">Tests</span></div>
+    </div>
+    <div class="process-step">
+      <div class="step-num-wrap"><div class="step-num">04</div><div class="step-arrow" style="border-color:rgba(255,77,28,.5);background:rgba(255,77,28,.1)">✓</div></div>
+      <div class="step-icon">🚀</div>
+      <div class="step-title"><span class="step-title-accent">Phase 04</span>Livraison</div>
+      <p class="step-desc">Tests, optimisations et mise en ligne. Je m'assure que tout est parfait avant de vous remettre les clés.</p>
+      <div class="step-tags"><span class="step-tag">Deploy</span><span class="step-tag">SEO</span><span class="step-tag">Perf.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="pricing">
+  <div class="section-tag">Tarifs</div>
+  <h2 class="section-title reveal">Des offres claires,<br>pour chaque ambition.</h2>
+  <p class="reveal" style="color:var(--muted);margin-top:.75rem;font-size:.95rem;max-width:520px">Paiement sécurisé via Stripe. Chaque formule est pensée pour maximiser vos résultats.</p>
+
+  <div class="pricing-grid">
+
+    <!-- GRATUIT -->
+    <div class="price-card reveal" data-delay="0">
+      <div class="price-tier">Basique</div>
+      <p class="price-desc" style="margin-bottom:.75rem">Parfait pour tester et débuter.</p>
+      <div style="background:rgba(255,77,28,.07);border:1px solid rgba(255,77,28,.2);border-radius:8px;padding:.6rem .85rem;font-size:.78rem;font-weight:600;color:var(--accent2);margin-bottom:1.25rem">🎯 Pour : Artistes ou micro-startups sans site ou avec peu d'audience.</div>
+      <ul class="price-features">
+        <li>Site Web personnalisé 1 page (landing page pro + responsive)</li>
+        <li>Intégration réseaux sociaux et Spotify / YouTube / Soundcloud</li>
+        <li>Formulaire de contact + CTA pour newsletter</li>
+        <li>1 appel stratégique de 30 min</li>
+        <li>Livraison en 5 jours</li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.9rem">★ Guide PDF : « 100 premiers fans avec ton site »</p>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem">✓ Modifications illimitées pendant 7 jours</p>
+      <div class="price-amount" style="margin-top:auto">499 <span>€</span></div>
+      <button class="btn-pay" onclick="openPayment('Gratuit', 499)">Essayer — 499 €</button>
+    </div>
+
+    <!-- ESSENTIEL -->
+    <div class="price-card popular reveal" data-delay="1">
+      <div class="popular-badge">⭐ Le plus demandé</div>
+      <div class="price-tier">Intermediaire</div>
+      <p class="price-desc" style="margin-bottom:.75rem">Pour progresser et enrichir vos projets.</p>
+      <div style="background:rgba(255,77,28,.07);border:1px solid rgba(255,77,28,.2);border-radius:8px;padding:.6rem .85rem;font-size:.78rem;font-weight:600;color:var(--accent2);margin-bottom:1.25rem">🎯 Pour : Startups, collectifs créatifs ou artistes en croissance.</div>
+      <ul class="price-features">
+        <li>Site Web complet (3 à 5 pages)</li>
+        <li>CMS (WordPress/Strapi + React ou Next.js)</li>
+        <li>SEO + optimisation de performance</li>
+        <li>Tracking et pixels publicitaires</li>
+        <li>2 RDV stratégiques</li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.9rem">★ Mini-formation vidéo « 3 Hacks pour tripler ton trafic »<br>★ Liste de 10 influenceurs à cibler</p>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem">✓ "Site validé ou refait" sous 30 jours</p>
+      <div class="price-amount" style="margin-top:auto">1 290 <span>€</span></div>
+      <button class="btn-pay" onclick="openPayment('Essentiel', 1290)">Essayer — 1 290 €</button>
+    </div>
+
+    <!-- PRO -->
+    <div class="price-card reveal" data-delay="2">
+      <div class="price-tier">Premium</div>
+      <p class="price-desc" style="margin-bottom:.75rem">Pour se démarquer et aller plus loin.</p>
+      <div style="background:rgba(255,77,28,.07);border:1px solid rgba(255,77,28,.2);border-radius:8px;padding:.6rem .85rem;font-size:.78rem;font-weight:600;color:var(--accent2);margin-bottom:1.25rem">🎯 Pour : Grandes entreprises ou artistes à forte ambition.</div>
+      <ul class="price-features">
+        <li>Web app Full Stack sur mesure (React + Node/Next + DB)</li>
+        <li>Dashboard admin (CRM léger, gestion utilisateurs…)</li>
+        <li>Tunnel de vente ultra optimisé + A/B Testing</li>
+        <li>SEO technique + stratégie de contenu</li>
+        <li>3 mois d'accompagnement & suivi</li>
+      </ul>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:.9rem">★ 10 vidéos courtes IA (type reels)<br>★ Plan de contenu 90 jours</p>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.5rem">✓ 10 000 visiteurs en 90 jours ou accompagnement prolongé</p>
+      <div class="price-amount" style="margin-top:auto">3 900 <span>€</span></div>
+      <button class="btn-pay" onclick="openPayment('Pro', 3900)">Essayer — 3 900 €</button>
+    </div>
+
+    <!-- ═══ TÉMOIGNAGE ═══ -->
+    <div class="price-card temoignage reveal" data-delay="3" onclick="openQuestionnaire()">
+      <div class="temo-badge">✦ Offre Spéciale</div>
+      <div class="temo-pulse"></div>
+      <div class="temo-icon">🤝</div>
+      <div class="price-tier" style="color:rgba(255,215,0,.5)">Échange Témoignage</div>
+      <div class="temo-price">Gratuit*</div>
+      <div class="temo-price-sub">*En échange d'un témoignage vidéo ou écrit</div>
+      <ul class="price-features">
+        <li class="temo">Site sur mesure offert</li>
+        <li class="temo">Projet réel dans mon portfolio</li>
+        <li class="temo">Accompagnement complet</li>
+        <li class="temo">1 témoignage vidéo ou écrit</li>
+        <li class="temo">Publication sur mes réseaux</li>
+        <li class="off">Places très limitées</li>
+      </ul>
+      <button class="btn-temo">Je suis intéressé(e) — Postuler →</button>
+    </div>
+
+  </div>
+
+  <div class="stripe-note">
+    <span class="stripe-badge"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Paiement sécurisé</span>
+    Propulsé par <strong style="color:rgba(255,255,255,.6);margin-left:.3rem">Stripe</strong>
+  </div>
+</section>
+
+<!-- MODAL STRIPE -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closePayment()">✕</button>
+    <div id="payForm">
+      <h3>Formule <span id="planName" style="color:var(--accent)"></span></h3>
+      <p id="planDesc">Paiement sécurisé par Stripe. Je vous contacte sous 24h pour lancer le projet.</p>
+      <div class="form-field"><label>Prénom & Nom</label><input type="text" id="payerName" placeholder="Jean Dupont"></div>
+      <div class="form-field"><label>Email</label><input type="email" id="payerEmail" placeholder="jean@exemple.com"></div>
+      <div class="form-field"><label>Votre projet</label><input type="text" id="projectDetails" placeholder="Décrivez brièvement votre besoin..."></div>
+      <div class="form-field"><label>Carte bancaire</label><div id="card-element"></div><div id="card-errors"></div></div>
+      <button class="btn-submit-pay" id="payBtn" onclick="submitPayment()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        Payer <span id="payAmount"></span> en toute sécurité
+      </button>
+    </div>
+    <div class="pay-success" id="paySuccess">
+      <div class="checkmark">✅</div>
+      <h4>Paiement reçu !</h4>
+      <p>Merci ! Je vous contacte dans les 24h pour démarrer votre projet.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL QUESTIONNAIRE TÉMOIGNAGE ═══ -->
+<div class="modal-overlay" id="temoOverlay">
+  <div class="temo-modal">
+    <button class="modal-close" onclick="closeTemo()" style="top:1.2rem;right:1.5rem;z-index:10">✕</button>
+    <div class="temo-modal-header">
+      <div class="temo-modal-title">✦ Offre Échange Témoignage</div>
+      <div class="temo-modal-sub">Un site offert en échange de votre témoignage — 5 minutes pour postuler</div>
+    </div>
+    <div class="temo-modal-body">
+      <div class="q-progress">
+        <div class="q-progress-bar"><div class="q-progress-fill" id="qProgress" style="width:20%"></div></div>
+        <div class="q-progress-text" id="qProgressText">Étape 1 sur 5</div>
+      </div>
+
+      <div class="q-step active" id="qs1">
+        <div class="q-step-label">Question 1 / 5</div>
+        <div class="q-step-title">Quel type de site souhaitez-vous ?</div>
+        <div class="q-options">
+          <div class="q-option" onclick="selectOption(this,'type','landing')"><div class="q-option-icon">🚀</div><div><div class="q-option-text">Landing page</div><div class="q-option-sub">Présentation, portfolio, vitrine</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'type','ecommerce')"><div class="q-option-icon">🛍️</div><div><div class="q-option-text">Boutique en ligne</div><div class="q-option-sub">Vente de produits ou services</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'type','app')"><div class="q-option-icon">⚙️</div><div><div class="q-option-text">Application web</div><div class="q-option-sub">Dashboard, outil, plateforme</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'type','blog')"><div class="q-option-icon">📝</div><div><div class="q-option-text">Blog / Magazine</div><div class="q-option-sub">Contenu, articles, actualités</div></div><div class="q-option-check"></div></div>
+        </div>
+        <div class="q-nav"><span></span><button class="q-btn-next" onclick="nextStep(2)">Continuer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+      </div>
+
+      <div class="q-step" id="qs2">
+        <div class="q-step-label">Question 2 / 5</div>
+        <div class="q-step-title">Quel est votre secteur d'activité ?</div>
+        <div class="q-options">
+          <div class="q-option" onclick="selectOption(this,'secteur','artiste')"><div class="q-option-icon">🎵</div><div><div class="q-option-text">Artiste / Créateur</div><div class="q-option-sub">Musicien, graphiste, photographe…</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'secteur','startup')"><div class="q-option-icon">💡</div><div><div class="q-option-text">Startup / Entrepreneur</div><div class="q-option-sub">Lancement de produit ou service</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'secteur','freelance')"><div class="q-option-icon">👤</div><div><div class="q-option-text">Freelance / Consultant</div><div class="q-option-sub">Prestataire indépendant</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="selectOption(this,'secteur','association')"><div class="q-option-icon">🤝</div><div><div class="q-option-text">Association / ONG</div><div class="q-option-sub">Projet à impact social</div></div><div class="q-option-check"></div></div>
+        </div>
+        <div class="q-nav"><button class="q-btn-back" onclick="nextStep(1)">← Retour</button><button class="q-btn-next" onclick="nextStep(3)">Continuer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+      </div>
+
+      <div class="q-step" id="qs3">
+        <div class="q-step-label">Question 3 / 5</div>
+        <div class="q-step-title">Quelles fonctionnalités sont essentielles ?</div>
+        <div class="q-options">
+          <div class="q-option" onclick="toggleMulti(this,'fonc','design')"><div class="q-option-icon">🎨</div><div><div class="q-option-text">Design premium & animations</div><div class="q-option-sub">UI moderne, micro-interactions</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="toggleMulti(this,'fonc','contact')"><div class="q-option-icon">📬</div><div><div class="q-option-text">Formulaire de contact / Réservation</div><div class="q-option-sub">Prise de RDV, devis en ligne</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="toggleMulti(this,'fonc','paiement')"><div class="q-option-icon">💳</div><div><div class="q-option-text">Paiement en ligne (Stripe)</div><div class="q-option-sub">Vente de produits ou services</div></div><div class="q-option-check"></div></div>
+          <div class="q-option" onclick="toggleMulti(this,'fonc','seo')"><div class="q-option-icon">📈</div><div><div class="q-option-text">SEO & Performance</div><div class="q-option-sub">Optimisation Google, vitesse</div></div><div class="q-option-check"></div></div>
+        </div>
+        <div class="q-nav"><button class="q-btn-back" onclick="nextStep(2)">← Retour</button><button class="q-btn-next" onclick="nextStep(4)">Continuer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+      </div>
+
+      <div class="q-step" id="qs4">
+        <div class="q-step-label">Question 4 / 5</div>
+        <div class="q-step-title">Délai souhaité & type de témoignage</div>
+        <div style="margin-bottom:1.2rem">
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;letter-spacing:.08em;text-transform:uppercase">Délai de livraison souhaité</div>
+          <div class="q-options">
+            <div class="q-option" onclick="selectOption(this,'delai','urgent')"><div class="q-option-icon">⚡</div><div><div class="q-option-text">Urgent — sous 2 semaines</div></div><div class="q-option-check"></div></div>
+            <div class="q-option" onclick="selectOption(this,'delai','normal')"><div class="q-option-icon">📅</div><div><div class="q-option-text">Standard — 2 à 4 semaines</div></div><div class="q-option-check"></div></div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:.75rem;color:var(--muted);margin-bottom:.6rem;letter-spacing:.08em;text-transform:uppercase">Type de témoignage proposé</div>
+          <div class="q-options">
+            <div class="q-option" onclick="selectOption(this,'temoType','video')"><div class="q-option-icon">🎬</div><div><div class="q-option-text">Témoignage vidéo (1–2 min)</div><div class="q-option-sub">Le plus impactant ✦ Recommandé</div></div><div class="q-option-check"></div></div>
+            <div class="q-option" onclick="selectOption(this,'temoType','ecrit')"><div class="q-option-icon">✍️</div><div><div class="q-option-text">Témoignage écrit détaillé</div><div class="q-option-sub">Google, LinkedIn, portfolio</div></div><div class="q-option-check"></div></div>
+          </div>
+        </div>
+        <div class="q-nav"><button class="q-btn-back" onclick="nextStep(3)">← Retour</button><button class="q-btn-next" onclick="nextStep(5)">Continuer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg></button></div>
+      </div>
+
+      <div class="q-step" id="qs5">
+        <div class="q-step-label">Question 5 / 5</div>
+        <div class="q-step-title">Vos coordonnées & résumé</div>
+        <div class="q-grid" style="margin-bottom:1rem">
+          <input class="q-input" type="text" id="qNom" placeholder="Prénom & Nom">
+          <input class="q-input" type="email" id="qEmail" placeholder="Email">
+        </div>
+        <textarea class="q-input" id="qProjet" rows="3" placeholder="Décrivez votre projet en quelques mots…" style="margin-bottom:1rem"></textarea>
+        <div class="q-summary" id="qSummary"></div>
+        <div class="q-nav">
+          <button class="q-btn-back" onclick="nextStep(4)">← Retour</button>
+          <button class="q-btn-next" onclick="submitQuestionnaire()">✦ Envoyer ma candidature</button>
+        </div>
+      </div>
+
+      <div class="q-success" id="qSuccess">
+        <div class="q-success-icon">🎉</div>
+        <h4>Candidature envoyée !</h4>
+        <p style="margin-top:.5rem">Super ! Je reviens vers vous sous 48h pour confirmer la sélection et définir les prochaines étapes. Surveillez votre email.</p>
+        <button onclick="closeTemo()" style="margin-top:1.5rem;padding:.7rem 2rem;background:linear-gradient(135deg,#b8860b,#ffd700);border:none;color:#080808;font-weight:700;font-size:.85rem;cursor:pointer;border-radius:100px;">Fermer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI CHAT -->
+<section class="chat-section" id="chat">
+  <div class="section-tag">Assistant IA</div>
+  <h2 class="section-title reveal">Posez-moi toutes<br>vos questions.</h2>
+  <div class="chat-wrap">
+    <div class="reveal">
+      <p style="color:var(--muted);font-size:.95rem;line-height:1.8;margin-bottom:1.5rem">Mon assistant IA répond instantanément à vos questions sur mes projets, ma stack technique, mes disponibilités et mes tarifs — 24h/24.</p>
+      <div style="display:flex;flex-direction:column;gap:.75rem">
+        <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted)"><span style="width:28px;height:28px;background:rgba(255,77,28,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">⚡</span>Réponse en temps réel</div>
+        <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted)"><span style="width:28px;height:28px;background:rgba(255,77,28,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">🧠</span>Alimenté par Claude (Anthropic)</div>
+        <div style="display:flex;align-items:center;gap:.75rem;font-size:.85rem;color:var(--muted)"><span style="width:28px;height:28px;background:rgba(255,77,28,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">🔒</span>Conversation privée</div>
+      </div>
+    </div>
+    <div class="chat-box">
+      <div class="chat-header">
+        <div class="chat-avatar">🤖</div>
+        <div><div class="chat-header-name">Assistant Portfolio</div><div class="chat-status">En ligne maintenant</div></div>
+      </div>
+      <div class="chat-msgs" id="chatMsgs">
+        <div class="msg msg-bot"><div class="msg-bubble">Bonjour ! 👋 Je suis l'assistant IA de ce portfolio. Posez-moi vos questions sur les projets, la stack technique, les tarifs ou les disponibilités.</div><div class="msg-time">Maintenant</div></div>
+      </div>
+      <div class="chat-hints" id="chatHints">
+        <span class="hint-chip" onclick="sendHint(this)">Quels sont vos tarifs ?</span>
+        <span class="hint-chip" onclick="sendHint(this)">Vos projets full-stack ?</span>
+        <span class="hint-chip" onclick="sendHint(this)">L'offre témoignage ?</span>
+        <span class="hint-chip" onclick="sendHint(this)">Êtes-vous disponible ?</span>
+      </div>
+      <div class="chat-input-wrap">
+        <input class="chat-input" id="chatInput" type="text" placeholder="Votre message..." onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="chat-send" onclick="sendChat()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section class="contact" id="contact">
+  <div class="contact-inner">
+    <div class="reveal">
+      <div class="section-tag">Contact</div>
+      <h2 class="section-title">Travaillons<br>ensemble.</h2>
+      <p style="color:var(--muted);margin-top:1rem;font-size:.95rem">Un projet en tête ? Je suis disponible et impatient d'en discuter avec vous.</p>
+    </div>
+    <div class="contact-links reveal">
+      <a href="mailto:votre@email.com" class="contact-link"><div class="c-icon">📧</div><div class="c-info"><div class="c-label">Email</div><div class="c-val">jitoundoupro24@gmail.com</div></div><span style="color:var(--muted)">→</span></a>
+      <a href="https://github.com/votre-profil" target="_blank" class="contact-link"><div class="c-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg></div><div class="c-info"><div class="c-label">GitHub</div><div class="c-val">github.com/Edkey2411</div></div><span style="color:var(--muted)">→</span></a>
+      <a href="https://linkedin.com" target="_blank" class="contact-link"><div class="c-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="#0a66c2"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></div><div class="c-info"><div class="c-label">LinkedIn</div><div class="c-val">linkedin.com/in/joan-itoundou</div></div><span style="color:var(--muted)">→</span></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <a href="#home" class="foot-logo">dev<span>.</span>folio</a>
+  <p>© 2025 — Fait avec passion</p>
+  <p>Tous droits réservés</p>
+</footer>
+
+<script>
+/* CURSOR */
+const cur = document.getElementById('cursor'), cr = document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cur.style.left=mx+'px';cur.style.top=my+'px'});
+(function loop(){rx+=(mx-rx)*.1;ry+=(my-ry)*.1;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(loop)})();
+document.querySelectorAll('a,button,.proj,.price-card,.hint-chip,.q-option').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('hovering'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('hovering'));
+});
+
+/* REVEAL */
+const obs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');obs.unobserve(e.target)}});
+},{threshold:.12});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+document.querySelectorAll('.proj').forEach((el,i)=>{el.style.transitionDelay=(i*.07)+'s';obs.observe(el)});
+document.querySelectorAll('.price-card').forEach((el,i)=>{el.style.transitionDelay=(i*.1)+'s';obs.observe(el)});
+document.querySelectorAll('.process-step').forEach((el,i)=>{el.style.transitionDelay=(i*.12)+'s';obs.observe(el)});
+
+/* SKILL BARS */
+const skillObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){
+    e.target.querySelectorAll('.skill-fill').forEach((f,i)=>{f.style.transitionDelay=(i*.12)+'s';f.style.transform=`scaleX(${f.dataset.w})`;});
+    skillObs.unobserve(e.target);
+  }});
+},{threshold:.3});
+const sw=document.getElementById('skillsWrap');if(sw)skillObs.observe(sw);
+
+/* COUNTERS */
+const cntObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){
+    document.querySelectorAll('.stat-num[data-target]').forEach(el=>{
+      const t=+el.dataset.target,suf=el.dataset.suffix||'',html=el.innerHTML.match(/<span>.*<\/span>/);
+      let c=0;const step=t/50;
+      const iv=setInterval(()=>{c+=step;if(c>=t){c=t;clearInterval(iv);}el.innerHTML=Math.floor(c)+(suf||'')+(html?html[0]:'');},20);
+    });cntObs.disconnect();
+  }});
+},{threshold:.5});
+const hs=document.querySelector('.hero-stats');if(hs)cntObs.observe(hs);
+
+/* NAV SHRINK */
+window.addEventListener('scroll',()=>{document.getElementById('nav').style.padding=window.scrollY>60?'1rem 4rem':'1.4rem 4rem';});
+
+/* STRIPE */
+const stripe = Stripe('pk_test_REMPLACE_PAR_TA_CLE_PUBLIQUE_STRIPE');
+const elements = stripe.elements({appearance:{theme:'night',variables:{colorPrimary:'#ff4d1c',colorBackground:'#111111',colorText:'#f0ede8',fontFamily:'Plus Jakarta Sans, sans-serif'}}});
+const cardEl = elements.create('card',{style:{base:{fontSize:'15px',color:'#f0ede8','::placeholder':{color:'#666'}}}});
+let currentPlan='',currentAmount=0;
+
+function openPayment(plan,amount){
+  currentPlan=plan;currentAmount=amount;
+  document.getElementById('planName').textContent=plan;
+  document.getElementById('planDesc').textContent=`Formule ${plan} — ${amount} €. Vous serez contacté sous 24h.`;
+  document.getElementById('payAmount').textContent=amount+' €';
+  document.getElementById('payForm').style.display='block';
+  document.getElementById('paySuccess').style.display='none';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>cardEl.mount('#card-element'),100);
+}
+function closePayment(){
+  document.getElementById('modalOverlay').classList.remove('open');
+  try{cardEl.unmount();}catch(e){}
+}
+document.getElementById('modalOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closePayment()});
+async function submitPayment(){
+  const btn=document.getElementById('payBtn');
+  const name=document.getElementById('payerName').value,email=document.getElementById('payerEmail').value;
+  if(!name||!email){document.getElementById('card-errors').textContent='Veuillez remplir tous les champs.';return;}
+  btn.disabled=true;btn.textContent='Traitement...';
+  await new Promise(r=>setTimeout(r,2000));
+  document.getElementById('payForm').style.display='none';
+  document.getElementById('paySuccess').style.display='block';
+}
+
+/* ═══ QUESTIONNAIRE TÉMOIGNAGE ═══ */
+let currentStep=1;
+const qData={type:'',secteur:'',fonc:[],delai:'',temoType:''};
+
+function openQuestionnaire(){
+  currentStep=1;
+  qData.type='';qData.secteur='';qData.fonc=[];qData.delai='';qData.temoType='';
+  document.querySelectorAll('.q-option').forEach(o=>o.classList.remove('selected'));
+  document.getElementById('qNom').value='';
+  document.getElementById('qEmail').value='';
+  document.getElementById('qProjet').value='';
+  document.getElementById('qSuccess').style.display='none';
+  document.querySelectorAll('.q-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('qs1').classList.add('active');
+  updateProgress(1);
+  document.getElementById('temoOverlay').classList.add('open');
+}
+function closeTemo(){ document.getElementById('temoOverlay').classList.remove('open'); }
+document.getElementById('temoOverlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeTemo()});
+
+function nextStep(n){
+  document.querySelectorAll('.q-step').forEach(s=>s.classList.remove('active'));
+  const t=document.getElementById('qs'+n);
+  if(t) t.classList.add('active');
+  if(n===5) buildSummary();
+  currentStep=n;
+  updateProgress(n);
+}
+function updateProgress(n){
+  document.getElementById('qProgress').style.width=(n/5*100)+'%';
+  document.getElementById('qProgressText').textContent=`Étape ${n} sur 5`;
+}
+function selectOption(el,key,val){
+  el.closest('.q-options').querySelectorAll('.q-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  qData[key]=val;
+}
+function toggleMulti(el,key,val){
+  el.classList.toggle('selected');
+  if(el.classList.contains('selected')){if(!qData[key].includes(val))qData[key].push(val);}
+  else{qData[key]=qData[key].filter(v=>v!==val);}
+}
+const LABELS={
+  type:{landing:'Landing page',ecommerce:'Boutique e-commerce',app:'Application web',blog:'Blog / Magazine'},
+  secteur:{artiste:'Artiste / Créateur',startup:'Startup / Entrepreneur',freelance:'Freelance / Consultant',association:'Association / ONG'},
+  delai:{urgent:'Urgent (< 2 semaines)',normal:'Standard (2–4 semaines)'},
+  temoType:{video:'Témoignage vidéo',ecrit:'Témoignage écrit'},
+  fonc:{design:'Design premium',contact:'Formulaire / Réservation',paiement:'Paiement Stripe',seo:'SEO & Performance'}
+};
+function buildSummary(){
+  const rows=[
+    ['Type de site',LABELS.type[qData.type]||'—'],
+    ['Secteur',LABELS.secteur[qData.secteur]||'—'],
+    ['Fonctionnalités',qData.fonc.length?qData.fonc.map(f=>LABELS.fonc[f]).join(', '):'—'],
+    ['Délai',LABELS.delai[qData.delai]||'—'],
+    ['Témoignage',LABELS.temoType[qData.temoType]||'—'],
+  ];
+  document.getElementById('qSummary').innerHTML=`<div class="q-summary-title">Récapitulatif de votre demande</div>${rows.map(([k,v])=>`<div class="q-summary-row"><span class="q-summary-key">${k}</span><span class="q-summary-val">${v}</span></div>`).join('')}`;
+}
+function submitQuestionnaire(){
+  const nom=document.getElementById('qNom').value,email=document.getElementById('qEmail').value;
+  if(!nom||!email){alert('Merci de remplir votre nom et email.');return;}
+  document.querySelectorAll('.q-step').forEach(s=>s.classList.remove('active'));
+  document.getElementById('qProgress').style.width='100%';
+  document.getElementById('qProgressText').textContent='Candidature envoyée ✓';
+  document.getElementById('qSuccess').style.display='block';
+}
+
+/* AI CHATBOT */
+const chatMsgs=document.getElementById('chatMsgs');
+const SYSTEM_PROMPT=`Tu es l'assistant IA du portfolio d'un développeur web. Réponds toujours en français, de façon concise et professionnelle (2-3 phrases max).
+Infos sur le développeur :
+- Compétences : HTML, CSS, JavaScript, React, Node.js/Express, Firebase, PostgreSQL, TailwindCSS, Vite
+- Projets : FYORE E-commerce (React+Node.js+Stripe+PostgreSQL), Système de réservation (React+Firebase), Boulangerie landing page IA, Animation Slider métiers ingénieur, Calculatrice JS, Générateur de versets bibliques, Landing page McDonald's, Prise de RDV coiffeur, Formulaire HTML/CSS
+- Tarifs : Starter 499€, Essentiel 1290€, Pro 3900€, et une offre spéciale gratuite en échange d'un témoignage
+- Disponible pour des projets freelance
+- Contact : via email ou liens en bas de page`;
+let chatHistory=[];
+function addMsg(text,isUser){const div=document.createElement('div');div.className='msg '+(isUser?'msg-user':'msg-bot');const now=new Date().toLocaleTimeString('fr',{hour:'2-digit',minute:'2-digit'});div.innerHTML=`<div class="msg-bubble">${text}</div><div class="msg-time">${now}</div>`;chatMsgs.appendChild(div);chatMsgs.scrollTop=chatMsgs.scrollHeight;}
+function addTyping(){const div=document.createElement('div');div.className='msg msg-bot';div.id='typing';div.innerHTML='<div class="typing"><span></span><span></span><span></span></div>';chatMsgs.appendChild(div);chatMsgs.scrollTop=chatMsgs.scrollHeight;}
+async function sendChat(){
+  const text=document.getElementById('chatInput').value.trim();if(!text)return;
+  document.getElementById('chatInput').value='';document.getElementById('chatHints').style.display='none';
+  addMsg(text,true);chatHistory.push({role:'user',content:text});addTyping();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,system:SYSTEM_PROMPT,messages:chatHistory})});
+    const data=await res.json();const reply=data.content?.[0]?.text||'Désolé, une erreur est survenue.';
+    document.getElementById('typing')?.remove();chatHistory.push({role:'assistant',content:reply});addMsg(reply,false);
+  }catch(e){document.getElementById('typing')?.remove();addMsg('Désolé, je suis indisponible. Contactez-moi directement par email.',false);}
+}
+function sendHint(el){document.getElementById('chatInput').value=el.textContent;sendChat();}
+</script>
+</body>
+</html>
